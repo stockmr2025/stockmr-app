@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock MR - Richard MacDonald</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background: #2d3748;
+            background-image: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+            min-height: 100vh;
+        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        
+        /* Header */
+        .header { background: #1a202c; border-radius: 20px; padding: 30px; margin-bottom: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); border: 4px solid #ef4444; }
+        .header-content { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; }
+        .header-left { display: flex; align-items: center; gap: 20px; }
+        .logo { background: #ef4444; width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 30px; font-weight: bold; box-shadow: 0 5px 15px rgba(239,68,68,0.5); }
+        .header-title h1 { font-size: 36px; color: white; margin-bottom: 5px; }
+        .header-title p { color: #cbd5e0; font-size: 14px; }
+        .btn { padding: 12px 24px; border-radius: 10px; border: none; font-weight: 600; cursor: pointer; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; transition: all 0.3s; }
+        .btn-primary { background: #10b981; color: white; box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
+        .btn-primary:hover { background: #059669; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(16,185,129,0.4); }
+        .btn-secondary { background: #3b82f6; color: white; box-shadow: 0 4px 12px rgba(59,130,246,0.3); }
+        .btn-secondary:hover { background: #2563eb; transform: translateY(-2px); }
+        
+        /* Stats */
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: #1a202c; border-radius: 15px; padding: 30px; color: white; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: 3px solid; }
+        .stat-card.blue { border-color: #3b82f6; }
+        .stat-card.green { border-color: #10b981; }
+        .stat-card.red { border-color: #ef4444; }
+        .stat-number { font-size: 48px; font-weight: bold; margin-bottom: 10px; }
+        .stat-label { opacity: 0.8; font-size: 14px; }
+        
+        /* Search */
+        .search-bar { display: flex; gap: 15px; margin-bottom: 30px; flex-wrap: wrap; }
+        .search-input { flex: 1; min-width: 300px; padding: 15px 20px; border: 2px solid #4a5568; border-radius: 10px; font-size: 14px; background: #1a202c; color: white; }
+        .search-input::placeholder { color: #718096; }
+        .search-input:focus { outline: none; border-color: #ef4444; background: #2d3748; }
+        select { padding: 15px 20px; border: 2px solid #4a5568; border-radius: 10px; font-weight: 600; cursor: pointer; background: #1a202c; color: white; }
+        
+        /* Vehicle Grid */
+        .vehicle-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 25px; }
+        .vehicle-card { border-radius: 15px; padding: 25px; cursor: pointer; transition: all 0.3s; border: 3px solid; box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
+        .vehicle-card:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0,0,0,0.5); }
+        .vehicle-card.sold-profit { background: #064e3b; border-color: #10b981; }
+        .vehicle-card.sold-loss { background: #7f1d1d; border-color: #ef4444; }
+        .vehicle-card.available { background: #1e3a8a; border-color: #3b82f6; }
+        .vehicle-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px; }
+        .vehicle-id { font-size: 28px; font-weight: bold; color: white; }
+        .vehicle-model { font-size: 18px; font-weight: 600; color: #e5e7eb; }
+        .vehicle-year { font-size: 14px; color: #d1d5db; }
+        .badge { padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
+        .badge.profit { background: #10b981; color: white; }
+        .badge.loss { background: #ef4444; color: white; }
+        .badge.available { background: #3b82f6; color: white; }
+        .vehicle-footer { margin-top: 15px; padding-top: 15px; border-top: 2px solid rgba(255,255,255,0.2); color: white; }
+        .vehicle-stat { display: flex; justify-content: space-between; margin: 8px 0; font-size: 14px; }
+        .vehicle-stat strong { font-weight: 700; }
+        
+        /* Modal */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; overflow-y: auto; padding: 20px; }
+        .modal.active { display: flex; align-items: center; justify-content: center; }
+        .modal-content { background: #1a202c; border-radius: 20px; max-width: 1000px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+        .modal-header { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; padding: 30px; border-radius: 20px 20px 0 0; display: flex; justify-content: space-between; align-items: start; }
+        .modal-title { font-size: 32px; font-weight: bold; }
+        .modal-subtitle { font-size: 20px; opacity: 0.9; }
+        .close-btn { background: rgba(255,255,255,0.2); border: none; color: white; font-size: 28px; cursor: pointer; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .close-btn:hover { background: rgba(255,255,255,0.3); }
+        .modal-body { padding: 30px; }
+        .section { background: #2d3748; border-radius: 15px; padding: 25px; margin-bottom: 25px; border: 3px solid; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .section.blue { border-color: #3b82f6; }
+        .section.purple { border-color: #8b5cf6; }
+        .section.green { border-color: #10b981; }
+        .section-title { font-size: 22px; font-weight: bold; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; color: white; }
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .info-item { font-size: 14px; }
+        .info-label { color: #9ca3af; font-weight: 500; }
+        .info-value { font-weight: 700; color: white; margin-top: 5px; }
+        .invoice-list { display: flex; flex-direction: column; gap: 15px; }
+        .invoice-item { background: #1a202c; border: 2px solid #4a5568; border-radius: 10px; padding: 20px; }
+        .invoice-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .invoice-type { font-weight: 700; padding: 5px 12px; border-radius: 8px; font-size: 13px; }
+        .invoice-type.mécanique { background: #6366f1; color: white; }
+        .invoice-type.body { background: #3b82f6; color: white; }
+        .invoice-type.pièces { background: #f59e0b; color: white; }
+        .invoice-type.pneu { background: #6b7280; color: white; }
+        .invoice-type.autre { background: #10b981; color: white; }
+        .invoice-amount { font-size: 24px; font-weight: bold; color: white; }
+        .invoice-details { font-size: 13px; color: #9ca3af; }
+        .summary-line { display: flex; justify-content: space-between; padding: 12px 0; font-size: 16px; color: white; }
+        .summary-line.total { border-top: 3px solid #10b981; margin-top: 15px; padding-top: 20px; font-size: 20px; font-weight: bold; }
+        .summary-line.profit { border-top: 4px solid #10b981; margin-top: 20px; padding-top: 20px; }
+        .summary-line.profit .label { font-size: 28px; font-weight: bold; }
+        .summary-line.profit .value { font-size: 36px; font-weight: bold; }
+        .no-data { text-align: center; padding: 40px; color: #9ca3af; }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .vehicle-grid { grid-template-columns: 1fr; }
+            .header-content { flex-direction: column; align-items: stretch; }
+            .search-bar { flex-direction: column; }
+            .search-input { min-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <div class="logo">🚗</div>
+                    <div class="header-title">
+                        <h1>Stock MR</h1>
+                        <p>Richard MacDonald • Gestion Complète</p>
+                    </div>
+                </div>
+                <div>
+                    <button class="btn btn-secondary" onclick="exportData()">💾 Exporter</button>
+                    <button class="btn btn-primary" onclick="showAddVehicle()">+ Nouveau</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card blue">
+                <div class="stat-number" id="stat-total">0</div>
+                <div class="stat-label">Total Achetés</div>
+            </div>
+            <div class="stat-card green">
+                <div class="stat-number" id="stat-sold">0</div>
+                <div class="stat-label">Vendus / Livrés</div>
+            </div>
+            <div class="stat-card red">
+                <div class="stat-number" id="stat-available">0</div>
+                <div class="stat-label">En Inventaire</div>
+            </div>
+        </div>
+
+        <div class="search-bar">
+            <input type="text" class="search-input" id="searchInput" placeholder="🔍 Rechercher MR###, marque, modèle..." oninput="filterVehicles()">
+            <select id="filterStatus" onchange="filterVehicles()">
+                <option value="tous">Tous</option>
+                <option value="disponible">Disponibles</option>
+                <option value="vendu">Vendus</option>
+            </select>
+        </div>
+
+        <div class="vehicle-grid" id="vehicleGrid"></div>
+    </div>
+
+    <div class="modal" id="vehicleModal" onclick="closeModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div>
+                    <div class="modal-title" id="modalTitle"></div>
+                    <div class="modal-subtitle" id="modalSubtitle"></div>
+                </div>
+                <button class="close-btn" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div>
+
+    <script>
+        let vehicles = [
+            {id:'MR000',brand:'DODGE',model:'CARAVAN',year:2012,niv:'370926',from:'MÉGA CENTRE',date:'2024-07-15',cost:8007.96,pad:0,status:'vendu',sold:7495,invoices:[]},
+            {id:'MR001',brand:'MAZDA',model:'3',year:2007,niv:'703028',from:'MAZDA TR',date:'2025-05-01',cost:1500,pad:0,status:'vendu',sold:4750,invoices:[]},
+            {id:'MR002',brand:'HONDA',model:'CIVIC',year:2010,niv:'006441',from:'NISSAN TR',date:'2025-05-06',cost:1400,pad:55,status:'vendu',sold:7000,invoices:[]},
+            {id:'MR003',brand:'TOYOTA',model:'YARIS',year:2010,niv:'323157',from:'NISSAN TR',date:'2025-05-06',cost:800,pad:55,status:'vendu',sold:5695,invoices:[]},
+            {id:'MR004',brand:'FORD',model:'ESCAPE',year:2015,niv:'C48819',from:'NISSAN TR',date:'2025-05-06',cost:2800,pad:0,status:'vendu',sold:7995,invoices:[]},
+            {id:'MR005',brand:'TOYOTA',model:'VENZA',year:2011,niv:'051471',from:'NISSAN TR',date:'2025-05-06',cost:3500,pad:100,status:'vendu',sold:8995,invoices:[]},
+            {id:'MR006',brand:'FIAT',model:'500',year:2012,niv:'377496',from:'ACHAT PORTE',date:'2025-05-12',cost:6000,pad:0,status:'vendu',sold:9995,invoices:[]},
+            {id:'MR007',brand:'PONTIAC',model:'VIBE',year:2006,niv:'436542',from:'KIA TR',date:'2025-05-12',cost:1000,pad:0,status:'vendu',sold:3995,invoices:[]},
+            {id:'MR008',brand:'TOYOTA',model:'MATRIX',year:2009,niv:'003473',from:'MAZDA TR',date:'2025-05-12',cost:1000,pad:55,status:'vendu',sold:4800,invoices:[]},
+            {id:'MR009',brand:'NISSAN',model:'VERSA',year:2011,niv:'386302',from:'KIA TR',date:'2025-05-13',cost:1000,pad:0,status:'vendu',sold:3995,invoices:[]},
+            {id:'MR010',brand:'DODGE',model:'CARAVAN',year:2011,niv:'R75404',from:'NISSAN SHAWINIGAN',date:'2025-05-13',cost:2000,pad:0,status:'vendu',sold:5995,invoices:[]},
+            {id:'MR011',brand:'PONTIAC',model:'G5',year:2009,niv:'248472',from:'KIA TR',date:'2025-05-16',cost:3000,pad:55,status:'vendu',sold:5995,invoices:[]},
+            {id:'MR012',brand:'FORD',model:'ESCAPE',year:2013,niv:'A05274',from:'KIA TR',date:'2025-05-16',cost:2460,pad:55,status:'vendu',sold:7495,invoices:[]},
+            {id:'MR013',brand:'CADILLAC',model:'',year:2013,niv:'119637',from:'HYUNDAI TR',date:'2025-05-23',cost:6000,pad:0,status:'vendu',sold:11500,invoices:[]},
+            {id:'MR014',brand:'BUICK',model:'ALLURE',year:2009,niv:'118410',from:'MAZDA TR',date:'2025-05-23',cost:1600,pad:0,status:'vendu',sold:5995,invoices:[]},
+            {id:'MR015',brand:'FORD',model:'ESCAPE',year:2009,niv:'C37443',from:'MAZDA TR',date:'2025-05-29',cost:500,pad:0,status:'vendu',sold:400,invoices:[]},
+            {id:'MR016',brand:'MITSUBISHI',model:'LANCER',year:2010,niv:'602306',from:'MAZDA TR',date:'2025-05-29',cost:3500,pad:0,status:'vendu',sold:6250,invoices:[]},
+            {id:'MR017',brand:'TOYOTA',model:'COROLLA',year:1999,niv:'747668',from:'MAZDA TR',date:'2025-05-29',cost:500,pad:0,status:'vendu',sold:600,invoices:[]},
+            {id:'MR018',brand:'HYUNDAI',model:'ELANTRA',year:2011,niv:'039742',from:'MAZDA TR',date:'2025-05-29',cost:500,pad:0,status:'vendu',sold:600,invoices:[]},
+            {id:'MR019',brand:'KIA',model:'RONDO',year:2014,niv:'040448',from:'KIA TR',date:'2025-06-02',cost:2000,pad:0,status:'vendu',sold:5995,invoices:[]},
+            {id:'MR020',brand:'SUBARU',model:'LEGACY',year:2013,niv:'007396',from:'KIA TR',date:'2025-06-02',cost:4000,pad:0,status:'vendu',sold:7995,invoices:[]},
+            {id:'MR021',brand:'CHEVROLET',model:'MALIBU',year:2011,niv:'364135',from:'MAZDA TR',date:'2025-06-03',cost:1750,pad:0,status:'vendu',sold:5995,invoices:[]},
+            {id:'MR022',brand:'KIA',model:'SORENTO',year:2014,niv:'500136',from:'KIA TR',date:'2025-06-03',cost:2000,pad:0,status:'vendu',sold:7995,invoices:[]},
+            {id:'MR023',brand:'NISSAN',model:'PATHFINDER',year:2014,niv:'693826',from:'ACHAT EXTERNE',date:'2025-06-05',cost:4000,pad:0,status:'vendu',sold:10995,invoices:[]},
+            {id:'MR024',brand:'HYUNDAI',model:'ELANTRA',year:2017,niv:'158179',from:'NISSAN CHOMEDEY',date:'2025-06-05',cost:2500,pad:0,status:'vendu',sold:7995,invoices:[]},
+            {id:'MR025',brand:'KIA',model:'SOUL',year:2010,niv:'112054',from:'NISSAN TR',date:'2025-06-06',cost:1200,pad:0,status:'vendu',sold:6995,invoices:[]},
+            {id:'MR026',brand:'VOLKSWAGEN',model:'GOLF',year:2015,niv:'514151',from:'MAZDA TR',date:'2025-06-06',cost:5000,pad:0,status:'vendu',sold:9995,invoices:[]},
+            {id:'MR027',brand:'KIA',model:'SPORTAGE',year:2007,niv:'340476',from:'KIA TR',date:'2025-06-11',cost:1000,pad:0,status:'vendu',sold:4995,invoices:[]},
+            {id:'MR028',brand:'HONDA',model:'ACCORD',year:2014,niv:'801228',from:'MAZDA TR',date:'2025-06-11',cost:5000,pad:0,status:'vendu',sold:9568,invoices:[]},
+            {id:'MR029',brand:'BMW',model:'128I',year:2009,niv:'J76063',from:'KIA TR',date:'2025-06-17',cost:6000,pad:0,status:'vendu',sold:10995,invoices:[]},
+            {id:'MR030',brand:'MAZDA',model:'CX7',year:2010,niv:'352016',from:'MAZDA TR',date:'2025-06-17',cost:600,pad:0,status:'vendu',sold:3595,invoices:[]},
+            {id:'MR031',brand:'NISSAN',model:'SENTRA',year:2013,niv:'741979',from:'VOLVO TR',date:'2025-06-19',cost:3000,pad:0,status:'vendu',sold:6995,invoices:[
+                {type:'Mécanique',date:'2025-06-20',no:'292700',desc:'entrepot pneu',amount:658},
+                {type:'Mécanique',date:'2025-06-20',no:'4772',desc:'chez raf',amount:641.38},
+                {type:'Pièces',date:'2025-06-22',no:'455501',desc:'j leblanc',amount:185.82},
+                {type:'Pièces',date:'2025-06-22',no:'25587',desc:'nissan 3r',amount:113.05},
+                {type:'Autre',date:'2025-06-25',no:'73501',desc:'motrio',amount:93.99},
+                {type:'Autre',date:'2025-06-25',no:'',desc:'market place',amount:150}
+            ]},
+            {id:'MR032',brand:'MAZDA',model:'3',year:2011,niv:'387272',from:'MAZDA TR',date:'2025-06-20',cost:2000,pad:0,status:'vendu',sold:6958,invoices:[]},
+            {id:'MR033',brand:'CHEVROLET',model:'TRAX',year:2015,niv:'182072',from:'NISSAN TR',date:'2025-06-18',cost:5000,pad:100,status:'vendu',sold:8995,invoices:[]},
+            {id:'MR034',brand:'VOLKSWAGEN',model:'JETTA',year:2011,niv:'108891',from:'MAZDA TR',date:'2025-07-02',cost:1300,pad:100,status:'vendu',sold:6250,invoices:[]},
+            {id:'MR035',brand:'NISSAN',model:'PATHFINDER',year:2014,niv:'632721',from:'MAZDA TR',date:'2025-07-02',cost:1500,pad:0,status:'vendu',sold:5995,invoices:[]},
+            {id:'MR036',brand:'CHEVROLET',model:'AVÉO',year:2008,niv:'092642',from:'VOLVO TR',date:'2025-07-04',cost:500,pad:0,status:'vendu',sold:700,invoices:[]},
+            {id:'MR037',brand:'VOLVO',model:'XC60',year:2016,niv:'843796',from:'VOLVO TR',date:'2025-07-04',cost:6500,pad:0,status:'vendu',sold:10995,invoices:[]},
+            {id:'MR038',brand:'TOYOTA',model:'COROLLA CE',year:2011,niv:'657719',from:'NISSAN SHAW',date:'2025-07-07',cost:2900,pad:0,status:'vendu',sold:5695,invoices:[
+                {type:'Mécanique',date:'2025-07-19',no:'926852',desc:'J LEBLANC',amount:123.23},
+                {type:'Mécanique',date:'2025-07-18',no:'4867',desc:'CHEZ RAF',amount:797.07},
+                {type:'Pièces',date:'2025-08-19',no:'103212',desc:'',amount:1072},
+                {type:'Pièces',date:'2025-09-16',no:'29021',desc:'X BOSSE',amount:250},
+                {type:'Pièces',date:'2025-09-16',no:'473412',desc:'J LEBLANC',amount:127.76},
+                {type:'Pièces',date:'2025-09-16',no:'25754',desc:'toyota sorel',amount:153.53},
+                {type:'Mécanique',date:'2025-10-09',no:'476312',desc:'J LEBLANC',amount:32.54},
+                {type:'Mécanique',date:'2025-10-09',no:'476484',desc:'J LEBLANC',amount:122.52},
+                {type:'Mécanique',date:'2025-10-07',no:'470090',desc:'J LEBLANC',amount:123.23}
+            ]},
+            {id:'MR039',brand:'HONDA',model:'CIVIC',year:2010,niv:'036421',from:'VOLVO TR',date:'2025-07-08',cost:5250,pad:0,status:'vendu',sold:7995,invoices:[]},
+            {id:'MR040',brand:'TOYOTA',model:'YARIS',year:2009,niv:'273618',from:'NISSAN TR',date:'2025-07-08',cost:1200,pad:0,status:'vendu',sold:4750,invoices:[]},
+            {id:'MR041',brand:'HYUNDAI',model:'TUCSON',year:2022,niv:'060728',from:'HYUNDAI TR',date:'2025-07-09',cost:28649,pad:0,status:'vendu',sold:29700,invoices:[]},
+            {id:'MR042',brand:'HYUNDAI',model:'SANTA FE',year:2012,niv:'121467',from:'KIA TR',date:'2025-07-15',cost:2700,pad:0,status:'vendu',sold:5995,invoices:[]},
+            {id:'MR043',brand:'CHEVROLET',model:'EQUINOX',year:2011,niv:'222382',from:'KIA TR',date:'2025-07-15',cost:2500,pad:0,status:'vendu',sold:6995,invoices:[]},
+            {id:'MR044',brand:'FIAT',model:'500',year:2012,niv:'379539',from:'ACHAT PORTE',date:'2025-07-24',cost:5500,pad:0,status:'vendu',sold:5500,invoices:[]},
+            {id:'MR045',brand:'HONDA',model:'CIVIC',year:2012,niv:'030082',from:'ACHAT PORTE',date:'2025-07-24',cost:5500,pad:0,status:'vendu',sold:6995,invoices:[]},
+            {id:'MR046',brand:'VOLVO',model:'C30 2010',year:2010,niv:'180902',from:'HYUNDAI TR',date:'2025-07-25',cost:3000,pad:0,status:'vendu',sold:6495,invoices:[
+                {type:'Mécanique',date:'2025-08-24',no:'',desc:'HYUNDAI TR',amount:1200},
+                {type:'Mécanique',date:'2025-09-08',no:'',desc:'LES RETOUCH',amount:150},
+                {type:'Mécanique',date:'2025-09-15',no:'4926',desc:'CHEZ RAF',amount:922.83},
+                {type:'Pneu',date:'2025-09-12',no:'7893',desc:'GG ALTERNA',amount:110},
+                {type:'Mécanique',date:'2025-09-12',no:'472335',desc:'J LEBLANC',amount:75.40},
+                {type:'Pneu',date:'2025-10-13',no:'8408680',desc:'POINT S',amount:420.59},
+                {type:'Autre',date:'2025-10-08',no:'',desc:'market place',amount:150}
+            ]},
+            {id:'MR047',brand:'MAZDA',model:'MAZDA2',year:2012,niv:'150721',from:'NISSAN SHAW',date:'2025-07-25',cost:1850,pad:100,status:'vendu',sold:5250,invoices:[]},
+            {id:'MR048',brand:'HYUNDAI',model:'ELANTRA',year:2010,niv:'177577',from:'VOLVO TR',date:'2025-07-28',cost:1000,pad:0,status:'vendu',sold:5795,invoices:[]},
+            {id:'MR049',brand:'HYUNDAI',model:'TUCSON',year:2022,niv:'069943',from:'HYUNDAI TR',date:'2025-07-28',cost:26180,pad:0,status:'vendu',sold:33995,invoices:[]},
+            {id:'MR050',brand:'FORD',model:'F250',year:2011,niv:'B54983',from:'HYUNDAI TR',date:'2025-07-29',cost:18000,pad:0,status:'vendu',sold:24955,invoices:[]},
+            {id:'MR051',brand:'HYUNDAI',model:'SANTA FE',year:2014,niv:'176529',from:'HYUNDAI TR',date:'2025-07-28',cost:10500,pad:0,status:'vendu',sold:13995,invoices:[]},
+            {id:'MR052',brand:'KIA',model:'RIO',year:2016,niv:'640662',from:'ACHAT PORTE',date:'2025-07-28',cost:7000,pad:100,status:'vendu',sold:9995,invoices:[]},
+            {id:'MR053',brand:'AUDI',model:'A5',year:2012,niv:'002389',from:'ACHAT PORTE',date:'2025-07-28',cost:6000,pad:0,status:'vendu',sold:11495,invoices:[]},
+            {id:'MR054',brand:'NISSAN',model:'VERSA',year:2007,niv:'979964',from:'ACHAT PORTE',date:'2025-07-28',cost:1500,pad:100,status:'vendu',sold:2995,invoices:[]},
+            {id:'MR055',brand:'DODGE',model:'CARAVAN',year:2012,niv:'370926',from:'ACHAT PORTE',date:'2025-07-31',cost:5345,pad:0,status:'vendu',sold:6995,invoices:[]},
+            {id:'MR056',brand:'MAZDA',model:'6',year:2014,niv:'114091',from:'NISSAN SHAW',date:'2025-07-29',cost:3050,pad:0,status:'vendu',sold:8995,invoices:[]},
+            {id:'MR057',brand:'NISSAN',model:'SENTRA',year:2018,niv:'327430',from:'NISSAN SHAW',date:'2025-07-29',cost:7000,pad:0,status:'vendu',sold:11995,invoices:[]},
+            {id:'MR058',brand:'HONDA',model:'FIT',year:2014,niv:'004439',from:'MAZDA TR',date:'2025-07-30',cost:1300,pad:100,status:'vendu',sold:5995,invoices:[]},
+            {id:'MR059',brand:'MAZDA',model:'CX7',year:2011,niv:'382779',from:'KIA TR',date:'2025-08-05',cost:2000,pad:0,status:'vendu',sold:5495,invoices:[]},
+            {id:'MR060',brand:'KIA',model:'SEDONA',year:2020,niv:'568677',from:'KIA TR',date:'2025-08-06',cost:3000,pad:0,status:'vendu',sold:3000,invoices:[]},
+            {id:'MR061',brand:'KIA',model:'SORENTO',year:2013,niv:'411494',from:'KIA TR',date:'2025-08-07',cost:3000,pad:0,status:'vendu',sold:5995,invoices:[]},
+            {id:'MR062',brand:'TOYOTA',model:'FJCRUISER',year:2007,niv:'097398',from:'KIA TR',date:'2025-08-07',cost:14500,pad:100,status:'vendu',sold:19995,invoices:[]},
+            {id:'MR063',brand:'FORD',model:'ESCAPE SE',year:2017,niv:'a05996',from:'KIA TR',date:'2025-08-12',cost:9000,pad:0,status:'vendu',sold:12450,invoices:[]},
+            {id:'MR064',brand:'FORD',model:'ESCAPE SE',year:2014,niv:'a16875',from:'KIA TR',date:'2025-08-12',cost:6700,pad:100,status:'vendu',sold:9995,invoices:[
+                {type:'Mécanique',date:'2025-08-14',no:'4963',desc:'chez raf',amount:327.71}
+            ]},
+            {id:'MR065',brand:'LEXUS',model:'RC 350',year:2020,niv:'5010234',from:'ACHAT PORTE',date:'2025-08-14',cost:15000,pad:100,status:'vendu',sold:17000,invoices:[]},
+            {id:'MR066',brand:'MAZDA',model:'3 2008',year:2008,niv:'413456',from:'MAZDA TR',date:'2025-08-15',cost:1000,pad:100,status:'disponible',sold:5695,invoices:[
+                {type:'Mécanique',date:'2025-08-19',no:'',desc:'AUTO',amount:1000},
+                {type:'Mécanique',date:'2025-08-20',no:'293850',desc:'ENTREPOT',amount:488},
+                {type:'Mécanique',date:'2025-08-27',no:'4969',desc:'CHEZ RAF',amount:905.42},
+                {type:'Autre',date:'2025-08-27',no:'',desc:'MARKET PLAC',amount:150},
+                {type:'Mécanique',date:'2025-09-10',no:'471938',desc:'J LEBLANC',amount:37.84},
+                {type:'Mécanique',date:'2025-09-09',no:'29571',desc:'LES RETOUCH',amount:135},
+                {type:'Mécanique',date:'2025-09-11',no:'6013',desc:'A LAFOND',amount:25},
+                {type:'Mécanique',date:'2025-09-11',no:'471860',desc:'J LEBLANC',amount:37.70},
+                {type:'Mécanique',date:'2025-09-11',no:'471868',desc:'J LEBLANC',amount:-18.9},
+                {type:'Mécanique',date:'2025-09-19',no:'474256',desc:'J LEBLANC',amount:248.24},
+                {type:'Mécanique',date:'2025-09-25',no:'5054',desc:'CHEZ RAF',amount:415.38},
+                {type:'Mécanique',date:'2025-09-26',no:'476147',desc:'J LEBLANC',amount:123.23}
+            ]},
+            {id:'MR067',brand:'VOLKSWAGEN',model:'JETTA',year:2013,niv:'286972',from:'ACHAT EXTERNE',date:'2025-08-16',cost:5000,pad:100,status:'vendu',sold:9995,invoices:[]},
+            {id:'MR068',brand:'HYUNDAI',model:'VENUE',year:2020,niv:'030506',from:'NISSAN TR',date:'2025-08-18',cost:4800,pad:100,status:'disponible',sold:9995,invoices:[]},
+            {id:'MR069',brand:'MAZDA',model:'3 SPORT 2010',year:2010,niv:'157208',from:'KIA TR',date:'2025-08-19',cost:1500,pad:100,status:'disponible',sold:5995,invoices:[
+                {type:'Mécanique',date:'2025-08-25',no:'',desc:'kia tr',amount:1500},
+                {type:'Mécanique',date:'2025-08-29',no:'28954',desc:'X BOSS',amount:150},
+                {type:'Mécanique',date:'2025-09-20',no:'468600',desc:'J LEBLANC',amount:754.21},
+                {type:'Autre',date:'2025-09-20',no:'',desc:'MARKET PLACE',amount:300},
+                {type:'Mécanique',date:'2025-10-05',no:'470293',desc:'J LEBLANC',amount:123.23},
+                {type:'Pneu',date:'2025-10-05',no:'7924',desc:'POINT S',amount:982.39},
+                {type:'Mécanique',date:'2025-10-22',no:'5050',desc:'chez raf',amount:335.55}
+            ]},
+            {id:'MR070',brand:'MINI',model:'COUNTRYMAN S',year:2014,niv:'p35990',from:'KIA TR',date:'2025-08-20',cost:7000,pad:100,status:'vendu',sold:10495,invoices:[]},
+            {id:'MR071',brand:'HYUNDAI',model:'ELANTRA',year:2013,niv:'207630',from:'ACHAT EXTERNE',date:'2025-08-22',cost:2000,pad:100,status:'disponible',sold:6995,invoices:[]},
+            {id:'MR072',brand:'DODGE',model:'JOURNEY',year:2016,niv:'168051',from:'KIA TR',date:'2025-08-23',cost:2000,pad:100,status:'vendu',sold:2100,invoices:[]},
+            {id:'MR073',brand:'VOLKSWAGEN',model:'JETTA',year:2014,niv:'275974',from:'KIA TR',date:'2025-09-05',cost:3800,pad:0,status:'disponible',sold:7495,invoices:[]},
+            {id:'MR074',brand:'FIAT',model:'500',year:2012,niv:'111287',from:'KIA TR',date:'2025-09-06',cost:1000,pad:0,status:'disponible',sold:3695,invoices:[]},
+            {id:'MR075',brand:'CHEVROLET',model:'COLORADO',year:2015,niv:'205012',from:'VOLVO TR',date:'2025-09-08',cost:6000,pad:100,status:'vendu',sold:10995,invoices:[
+                {type:'Mécanique',date:'2025-09-09',no:'471139',desc:'J LEBLANC',amount:198.80},
+                {type:'Mécanique',date:'2025-09-09',no:'471316',desc:'J LEBLANC',amount:48.07},
+                {type:'Mécanique',date:'2025-09-12',no:'472492',desc:'J LEBLANC',amount:104.85},
+                {type:'Mécanique',date:'2025-09-12',no:'472476',desc:'JLEBLANC',amount:120.82},
+                {type:'Mécanique',date:'2025-09-12',no:'472527',desc:'J LEBLANC',amount:94.82},
+                {type:'Pneu',date:'2025-09-10',no:'7667',desc:'POINT S',amount:587.34},
+                {type:'Pneu',date:'2025-09-16',no:'294381',desc:'ENTR PNEU',amount:840},
+                {type:'Autre',date:'2025-09-17',no:'369442',desc:'TRC',amount:23.75}
+            ]},
+            {id:'MR076',brand:'VOLKSWAGEN',model:'EOS',year:2008,niv:'053139',from:'NISSAN TR',date:'2025-09-09',cost:3500,pad:0,status:'disponible',sold:6995,invoices:[]},
+            {id:'MR077',brand:'VOLKSWAGEN',model:'PASSAT',year:2016,niv:'022459',from:'VOLVO TR',date:'2025-09-09',cost:8500,pad:0,status:'disponible',sold:13895,invoices:[]},
+            {id:'MR078',brand:'CHEVROLET',model:'MALIBU',year:2011,niv:'332617',from:'ECHANGE',date:'2025-09-10',cost:500,pad:0,status:'vendu',sold:400,invoices:[]},
+            {id:'MR079',brand:'CHEVROLET',model:'EQUINOX',year:2005,niv:'107544',from:'ECHANGE',date:'2025-08-29',cost:300,pad:0,status:'vendu',sold:400,invoices:[]},
+            {id:'MR080',brand:'NISSAN',model:'QASHQAI',year:2018,niv:'287939',from:'ACHAT EXTERNE',date:'2025-09-16',cost:18000,pad:100,status:'disponible',sold:20995,invoices:[]},
+            {id:'MR081',brand:'MITSUBISHI',model:'RVR',year:2015,niv:'605746',from:'NISSAN TR',date:'2025-09-16',cost:5000,pad:0,status:'disponible',sold:9995,invoices:[]},
+            {id:'MR082',brand:'FORD',model:'ESCAPE',year:2013,niv:'C74250',from:'ECHANGE',date:'2025-09-17',cost:4500,pad:100,status:'disponible',sold:8295,invoices:[]},
+            {id:'MR083',brand:'TOYOTA',model:'MATRIX',year:2009,niv:'183426',from:'ECHANGE',date:'2025-09-17',cost:3000,pad:100,status:'disponible',sold:4495,invoices:[]},
+            {id:'MR084',brand:'BMW',model:'I28',year:2009,niv:'J76196',from:'HYUNDAI TR',date:'2025-09-19',cost:6000,pad:0,status:'disponible',sold:9995,invoices:[]},
+            {id:'MR085',brand:'VOLVO',model:'',year:2018,niv:'349616',from:'HYUNDAI TR',date:'2025-09-19',cost:20500,pad:0,status:'disponible',sold:25995,invoices:[]},
+            {id:'MR086',brand:'VOLKSWAGEN',model:'JETTA',year:2011,niv:'376763',from:'ECHANGE',date:'2025-09-22',cost:1000,pad:0,status:'disponible',sold:400,invoices:[]},
+            {id:'MR087',brand:'VOLKSWAGEN',model:'GOLF',year:2019,niv:'505195',from:'MAZDA TR',date:'2025-09-22',cost:6500,pad:100,status:'disponible',sold:10995,invoices:[]},
+            {id:'MR088',brand:'HYUNDAI',model:'ELANTRA',year:2012,niv:'065114',from:'MAZDA TR',date:'2025-09-24',cost:800,pad:0,status:'disponible',sold:5995,invoices:[]},
+            {id:'MR089',brand:'',model:'',year:2025,niv:'',from:'',date:'2025-10-09',cost:100,pad:0,status:'disponible',sold:0,invoices:[]},
+            {id:'MR090',brand:'',model:'',year:2025,niv:'',from:'',date:'2025-10-09',cost:100,pad:0,status:'disponible',sold:0,invoices:[]},
+            {id:'MR091',brand:'',model:'',year:2025,niv:'',from:'',date:'2025-10-09',cost:100,pad:0,status:'disponible',sold:0,invoices:[]},
+            {id:'MR092',brand:'',model:'',year:2025,niv:'',from:'',date:'2025-10-09',cost:100,pad:0,status:'disponible',sold:0,invoices:[]},
+            {id:'MR093',brand:'',model:'',year:2025,niv:'',from:'',date:'2025-10-09',cost:100,pad:0,status:'disponible',sold:0,invoices:[]},
+            {id:'MR094',brand:'',model:'',year:2025,niv:'',from:'',date:'2025-10-09',cost:100,pad:0,status:'disponible',sold:0,invoices:[]},
+            {id:'MR095',brand:'',model:'',year:2025,niv:'',from:'',date:'2025-10-09',cost:100,pad:0,status:'disponible',sold:0,invoices:[]}
+        ];
+
+        let allVehicles = [...vehicles];
+
+        function calculateTotals(v) {
+            const invoiceTotal = v.invoices.reduce((sum, inv) => sum + inv.amount, 0);
+            const totalCost = v.cost + v.pad + invoiceTotal;
+            const profit = v.sold - totalCost;
+            return { invoiceTotal, totalCost, profit };
+        }
+
+        function renderVehicles() {
+            const grid = document.getElementById('vehicleGrid');
+            grid.innerHTML = '';
+            
+            vehicles.forEach(vehicle => {
+                if(!vehicle.brand && !vehicle.model) return; // Skip empty
+                
+                const { invoiceTotal, profit } = calculateTotals(vehicle);
+                const statusClass = vehicle.status === 'vendu' 
+                    ? (profit >= 0 ? 'sold-profit' : 'sold-loss')
+                    : 'available';
+                
+                const badge = vehicle.status === 'vendu'
+                    ? `<span class="badge ${profit >= 0 ? 'profit' : 'loss'}">${profit >= 0 ? '✓' : '↓'} ${profit.toLocaleString('fr-CA', {style:'currency',currency:'CAD'})}</span>`
+                    : '<span class="badge available">📦 Dispo</span>';
+
+                grid.innerHTML += `
+                    <div class="vehicle-card ${statusClass}" onclick="showVehicle('${vehicle.id}')">
+                        <div class="vehicle-header">
+                            <div>
+                                <div class="vehicle-id">${vehicle.id}</div>
+                                <div class="vehicle-model">${vehicle.brand} ${vehicle.model}</div>
+                                <div class="vehicle-year">Année ${vehicle.year}</div>
+                            </div>
+                            ${badge}
+                        </div>
+                        <div class="vehicle-footer">
+                            <div class="vehicle-stat">
+                                <span>Factures:</span>
+                                <strong>${vehicle.invoices.length}</strong>
+                            </div>
+                            ${vehicle.invoices.length > 0 ? `
+                                <div class="vehicle-stat">
+                                    <span>Total factures:</span>
+                                    <strong style="color:#ef4444">${invoiceTotal.toLocaleString('fr-CA',{style:'currency',currency:'CAD'})}</strong>
+                                </div>
+                            ` : ''}
+                            ${vehicle.status === 'vendu' ? `
+                                <div class="vehicle-stat" style="border-top:2px solid rgba(255,255,255,0.2);padding-top:10px;margin-top:10px">
+                                    <span style="font-weight:700">Profit NET:</span>
+                                    <strong style="color:${profit >= 0 ? '#10b981' : '#ef4444'};font-size:16px">${profit.toLocaleString('fr-CA',{style:'currency',currency:'CAD'})}</strong>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            updateStats();
+        }
+
+        function updateStats() {
+            const total = vehicles.filter(v => v.brand || v.model).length;
+            document.getElementById('stat-total').textContent = total;
+            document.getElementById('stat-sold').textContent = vehicles.filter(v => v.status === 'vendu').length;
+            document.getElementById('stat-available').textContent = vehicles.filter(v => v.status === 'disponible').length;
+        }
+
+        function filterVehicles() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const status = document.getElementById('filterStatus').value;
+            
+            vehicles = allVehicles.filter(v => {
+                const matchSearch = v.id.toLowerCase().includes(search) || 
+                                  v.brand.toLowerCase().includes(search) || 
+                                  v.model.toLowerCase().includes(search);
+                const matchStatus = status === 'tous' || v.status === status;
+                return matchSearch && matchStatus;
+            });
+            
+            renderVehicles();
+        }
+
+        function showVehicle(id) {
+            const vehicle = allVehicles.find(v => v.id === id);
+            if (!vehicle) return;
+
+            const { invoiceTotal, totalCost, profit } = calculateTotals(vehicle);
+            
+            document.getElementById('modalTitle').textContent = vehicle.id;
+            document.getElementById('modalSubtitle').textContent = `${vehicle.brand} ${vehicle.model} ${vehicle.year}`;
+            
+            let invoicesHTML = vehicle.invoices.length === 0 
+                ? '<div class="no-data">Aucune facture</div>'
+                : vehicle.invoices.map(inv => `
+                    <div class="invoice-item">
+                        <div class="invoice-header">
+                            <span class="invoice-type ${inv.type.toLowerCase()}">${inv.type}</span>
+                            <span class="invoice-amount">${inv.amount.toLocaleString('fr-CA',{style:'currency',currency:'CAD'})}</span>
+                        </div>
+                        <div class="invoice-details">
+                            ${inv.no ? `No: ${inv.no} • ` : ''}${new Date(inv.date).toLocaleDateString('fr-CA')}${inv.desc ? ` • ${inv.desc}` : ''}
+                        </div>
+                    </div>
+                `).join('');
+
+            document.getElementById('modalBody').innerHTML = `
+                <div class="section blue">
+                    <div class="section-title">💰 1. ACHAT (STOCK)</div>
+                    <div class="info-grid">
+                        <div class="info-item"><div class="info-label">NIV</div><div class="info-value">${vehicle.niv}</div></div>
+                        <div class="info-item"><div class="info-label">Coûtant</div><div class="info-value" style="color:#3b82f6;font-size:18px">${vehicle.cost.toLocaleString('fr-CA',{style:'currency',currency:'CAD'})}</div></div>
+                        <div class="info-item"><div class="info-label">Provenance</div><div class="info-value">${vehicle.from}</div></div>
+                        <div class="info-item"><div class="info-label">Date</div><div class="info-value">${new Date(vehicle.date).toLocaleDateString('fr-CA')}</div></div>
+                        ${vehicle.pad > 0 ? `<div class="info-item"><div class="info-label">PAD</div><div class="info-value" style="color:#ef4444">${vehicle.pad.toLocaleString('fr-CA',{style:'currency',currency:'CAD'})}</div></div>` : ''}
+                    </div>
+                </div>
+                <div class="section purple">
+                    <div class="section-title">📋 2. FACTURES EXTERNES</div>
+                    <div class="invoice-list">${invoicesHTML}</div>
+                </div>
+                <div class="section green">
+                    <div class="section-title">✅ 3. VENTE & PROFIL NET</div>
+                    <div class="summary-line"><span>Prix d'achat:</span><strong>${vehicle.cost.toLocaleString('fr-CA',{style:'currency',currency:'CAD'})}</strong></div>
+                    ${vehicle.pad > 0 ? `<div class="summary-line"><span>PAD:</span><strong>${vehicle.pad.toLocaleString('fr-CA',{style:'currency',currency:'CAD'})}</strong></div>` : ''}
+                    <div class="summary-line"><span>Total factures:</span><strong style="color:#ef4444">${invoiceTotal.toLocaleString('fr-CA',{style:'currency',currency:'CAD'})}</strong></div>
+                    <div class="summary-line total"><span>COÛT TOTAL:</span><strong>${totalCost.toLocaleString('fr-CA',{style:'currency',currency:'CAD'})}</strong></div>
+                    <div class="summary-line" style="font-size:18px;margin-top:15px"><span style="color:#10b981;font-weight:700">Prix de vente:</span><strong style="color:#10b981;font-size:22px">${vehicle.sold.toLocaleString('fr-CA',{style:'currency',currency:'CAD'})}</strong></div>
+                    <div class="summary-line profit"><span class="label">PROFIL NET:</span><strong class="value" style="color:${profit >= 0 ? '#10b981' : '#ef4444'}">${profit.toLocaleString('fr-CA',{style:'currency',currency:'CAD'})}</strong></div>
+                    <div style="margin-top:20px">${vehicle.status === 'vendu' ? `<span class="badge ${profit >= 0 ? 'profit' : 'loss'}" style="font-size:16px;padding:12px 24px">${profit >= 0 ? '✓ Vendu profit' : '↓ Vendu perte'}</span>` : '<span class="badge available" style="font-size:16px;padding:12px 24px">📦 En inventaire</span>'}</div>
+                </div>
+            `;
+            
+            document.getElementById('vehicleModal').classList.add('active');
+        }
+
+        function closeModal(event) {
+            if (!event || event.target.id === 'vehicleModal') {
+                document.getElementById('vehicleModal').classList.remove('active');
+            }
+        }
+
+        function exportData() {
+            const data = JSON.stringify(allVehicles, null, 2);
+            const blob = new Blob([data], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'stock-mr-' + new Date().toISOString().split('T')[0] + '.json';
+            a.click();
+        }
+
+        function showAddVehicle() {
+            alert('💡 Pour ajouter : Modifiez le fichier HTML et ajoutez les données dans le tableau "vehicles"');
+        }
+
+        renderVehicles();
+    </script>
+</body>
+</html>
